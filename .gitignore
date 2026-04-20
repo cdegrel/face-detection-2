@@ -13,7 +13,6 @@ build/
 *.key
 .env
 .env.local
-faces_db.json
 yolov8n.pt
 .DS_Store
 *.log
