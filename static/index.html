@@ -1,0 +1,1674 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Face Recognition System</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background: #0f1419;
+                overflow: hidden;
+                color: #e0e0e0;
+            }
+
+            .container {
+                display: flex;
+                width: 100vw;
+                height: 100vh;
+            }
+
+            .video-section {
+                flex: 1;
+                background: #000;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+
+            .video-wrapper {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+
+            video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: none;
+            }
+
+            canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: none;
+            }
+
+            .sidebar {
+                width: 350px;
+                background: #1a1e27;
+                border-left: 1px solid #2a2e37;
+                display: flex;
+                flex-direction: column;
+                color: #e0e0e0;
+            }
+
+            .sidebar-header {
+                padding: 24px;
+                border-bottom: 1px solid #2a2e37;
+                background: #0f1419;
+            }
+
+            .sidebar-header h1 {
+                font-size: 18px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                color: #fff;
+            }
+
+            .sidebar-content {
+                flex: 1;
+                padding: 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                overflow-y: auto;
+            }
+
+            .section {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .section-title {
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                color: #8b8e96;
+            }
+
+            select {
+                padding: 10px 12px;
+                background: #252b36;
+                border: 1px solid #3a3f4a;
+                border-radius: 4px;
+                color: #e0e0e0;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            select:hover {
+                border-color: #4a5060;
+                background: #2a3039;
+            }
+
+            select:focus {
+                outline: none;
+                border-color: #5b7aff;
+                box-shadow: 0 0 0 3px rgba(91, 122, 255, 0.1);
+            }
+
+            input[type="text"] {
+                padding: 10px 12px;
+                background: #252b36;
+                border: 1px solid #3a3f4a;
+                border-radius: 4px;
+                color: #e0e0e0;
+                font-size: 13px;
+                transition: all 0.2s;
+            }
+
+            input[type="text"]:focus {
+                outline: none;
+                border-color: #5b7aff;
+                box-shadow: 0 0 0 3px rgba(91, 122, 255, 0.1);
+            }
+
+            .btn {
+                padding: 10px 16px;
+                border: none;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-align: center;
+                width: 100%;
+            }
+
+            .btn-primary {
+                background: #5b7aff;
+                color: #fff;
+            }
+
+            .btn-primary:hover {
+                background: #4a6ae8;
+                box-shadow: 0 4px 12px rgba(91, 122, 255, 0.3);
+            }
+
+            .btn-primary:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                box-shadow: none;
+            }
+
+            .btn-success {
+                background: #2ea043;
+                color: #fff;
+                margin-top: 8px;
+            }
+
+            .btn-success:hover {
+                background: #25863a;
+                box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+            }
+
+            .btn-warning {
+                background: #b8680a;
+                color: #fff;
+                margin-top: 8px;
+            }
+
+            .btn-warning:hover {
+                background: #a35a09;
+                box-shadow: 0 4px 12px rgba(184, 104, 10, 0.3);
+            }
+
+            .btn-danger {
+                background: #d84a3a;
+                color: #fff;
+            }
+
+            .btn-danger:hover {
+                background: #c63a2a;
+                box-shadow: 0 4px 12px rgba(216, 74, 58, 0.3);
+            }
+
+            .btn-secondary {
+                background: #3a3f4a;
+                color: #e0e0e0;
+                padding: 10px 16px;
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            .btn-secondary:hover {
+                background: #454b57;
+            }
+
+            .people-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-height: 350px;
+                overflow-y: auto;
+            }
+
+            .person-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px;
+                background: #252b36;
+                border-radius: 4px;
+                border: 1px solid #3a3f4a;
+                font-size: 13px;
+                transition: all 0.2s;
+            }
+
+            .person-item:hover {
+                border-color: #4a5060;
+                background: #2a3039;
+            }
+
+            .person-name {
+                color: #e0e0e0;
+                flex: 1;
+                font-weight: 500;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 20px;
+                color: #6b7077;
+                font-size: 12px;
+            }
+
+            .result-box {
+                background: #252b36;
+                border-radius: 4px;
+                padding: 12px;
+                display: none;
+                border-left: 3px solid #6b7077;
+                margin-top: 12px;
+            }
+
+            .result-box.success {
+                background: #1a3a1a;
+                border-left-color: #2ea043;
+            }
+
+            .result-box.error {
+                background: #3a1a1a;
+                border-left-color: #d84a3a;
+            }
+
+            .result-text {
+                font-size: 12px;
+                line-height: 1.5;
+                color: #e0e0e0;
+            }
+
+            .result-box.success .result-text {
+                color: #6fff99;
+            }
+
+            .result-box.error .result-text {
+                color: #ff7a6e;
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .modal.active {
+                display: flex;
+            }
+
+            .modal-content {
+                background: #1a1e27;
+                padding: 28px;
+                border-radius: 6px;
+                min-width: 380px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                border: 1px solid #2a2e37;
+            }
+
+            .modal-content h3 {
+                color: #fff;
+                margin-bottom: 20px;
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .modal-content input {
+                width: 100%;
+                padding: 10px 12px;
+                margin-bottom: 16px;
+                background: #252b36;
+                border: 1px solid #3a3f4a;
+                border-radius: 4px;
+                color: #e0e0e0;
+                font-size: 13px;
+            }
+
+            .modal-content input:focus {
+                outline: none;
+                border-color: #5b7aff;
+                box-shadow: 0 0 0 3px rgba(91, 122, 255, 0.1);
+            }
+
+            .modal-buttons {
+                display: flex;
+                gap: 12px;
+                margin-top: 20px;
+            }
+
+            .modal-btn {
+                flex: 1;
+                padding: 10px;
+                border: none;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .modal-btn.save {
+                background: #5b7aff;
+                color: white;
+            }
+
+            .modal-btn.save:hover {
+                background: #4a6ae8;
+                box-shadow: 0 4px 12px rgba(91, 122, 255, 0.3);
+            }
+
+            .modal-btn.cancel {
+                background: #3a3f4a;
+                color: #e0e0e0;
+            }
+
+            .modal-btn.cancel:hover {
+                background: #454b57;
+            }
+
+            .preview-box {
+                width: 100%;
+                height: 150px;
+                background: #252b36;
+                border: 1px solid #3a3f4a;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #6b7077;
+                overflow: hidden;
+                margin: 16px 0;
+            }
+
+            .preview-box img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            input[type="file"] {
+                display: none;
+            }
+
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #252b36;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #3a3f4a;
+                border-radius: 3px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #4a5060;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="video-section">
+                <div class="video-wrapper">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="detectionCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h1>Face Recognition</h1>
+                </div>
+
+                <div class="sidebar-content">
+                    <!-- Source Selection -->
+                    <div class="section">
+                        <div class="section-title">Video Source</div>
+                        <select id="sourceSelect">
+                            <option value="">Select source</option>
+                            <option value="camera">Camera</option>
+                            <option value="rtsp">RTSP Stream</option>
+                            <option value="p2p">P2P/TCP</option>
+                        </select>
+                    </div>
+
+                    <!-- Camera Section -->
+                    <div
+                        class="section"
+                        id="cameraSection"
+                        style="display: none"
+                    >
+                        <button class="btn btn-primary" id="startCameraBtn">
+                            Start Camera
+                        </button>
+                        <button
+                            class="btn btn-secondary"
+                            id="stopCameraBtn"
+                            style="display: none"
+                        >
+                            Stop Camera
+                        </button>
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 8px;
+                                margin-top: 8px;
+                            "
+                        >
+                            <button
+                                class="btn btn-warning"
+                                id="toggleDetectionBtn"
+                                disabled
+                            >
+                                Detection: OFF
+                            </button>
+                            <button
+                                class="btn btn-warning"
+                                id="toggleRecognitionBtn"
+                                disabled
+                            >
+                                Recognition: OFF
+                            </button>
+                        </div>
+                        <button
+                            class="btn btn-success"
+                            id="captureBtn"
+                            disabled
+                            style="margin-top: 8px"
+                        >
+                            Identify
+                        </button>
+                    </div>
+
+                    <!-- RTSP Section -->
+                    <div class="section" id="rtspSection" style="display: none">
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr auto;
+                                gap: 8px;
+                            "
+                        >
+                            <select id="rtspSelect">
+                                <option value="">Select saved stream</option>
+                            </select>
+                            <button
+                                class="btn btn-primary"
+                                id="addStreamBtn"
+                                style="width: auto"
+                            >
+                                +
+                            </button>
+                            <button
+                                class="btn btn-danger"
+                                id="deleteStreamBtn"
+                                style="width: 100%; margin-top: 4px; grid-column: 1 / -1"
+                                onclick="deleteSelectedStream()"
+                            >
+                                Delete Stream
+                            </button>
+                        </div>
+                        <button
+                            class="btn btn-primary"
+                            id="connectRtspBtn"
+                            style="margin-top: 8px"
+                        >
+                            Connect
+                        </button>
+                        <button
+                            class="btn btn-danger"
+                            id="disconnectRtspBtn"
+                            style="margin-top: 8px; display: none"
+                        >
+                            Disconnect
+                        </button>
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 8px;
+                                margin-top: 8px;
+                            "
+                        >
+                            <button
+                                class="btn btn-warning"
+                                id="rtspToggleDetectionBtn"
+                                disabled
+                                style="display: none"
+                            >
+                                Detection: OFF
+                            </button>
+                            <button
+                                class="btn btn-warning"
+                                id="rtspToggleRecognitionBtn"
+                                disabled
+                                style="display: none"
+                            >
+                                Recognition: OFF
+                            </button>
+                        </div>
+                        <div
+                            style="
+                                margin-top: 12px;
+                                padding: 8px;
+                                background: #252b36;
+                                border-radius: 4px;
+                                font-size: 12px;
+                                display: none;
+                            "
+                            id="rtspStatus"
+                        ></div>
+                        <video
+                            id="rtspVideo"
+                            style="
+                                width: 100%;
+                                height: 300px;
+                                background: #000;
+                                margin-top: 12px;
+                                border-radius: 4px;
+                                display: none;
+                            "
+                        ></video>
+                    </div>
+
+                    <!-- Add RTSP Stream Modal -->
+                    <div id="addStreamModal" class="modal">
+                        <div class="modal-content">
+                            <h3>Add RTSP Stream</h3>
+                            <input
+                                type="text"
+                                id="streamName"
+                                placeholder="Stream Name (e.g., Camera 1)"
+                            />
+                            <input
+                                type="text"
+                                id="streamUrl"
+                                placeholder="rtsp://192.168.1.100:554/stream"
+                                style="margin-top: 8px"
+                            />
+                            <div class="modal-buttons" style="margin-top: 16px">
+                                <button
+                                    class="modal-btn save"
+                                    id="saveStreamBtn"
+                                >
+                                    Add
+                                </button>
+                                <button
+                                    class="modal-btn cancel"
+                                    id="closeStreamModalBtn"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- P2P Section -->
+                    <div class="section" id="p2pSection" style="display: none">
+                        <input
+                            type="text"
+                            id="p2pUrl"
+                            placeholder="tcp://127.0.0.1:65535"
+                        />
+                        <button class="btn btn-primary" id="connectP2pBtn">
+                            Connect
+                        </button>
+                    </div>
+
+                    <!-- Results -->
+                    <div class="result-box" id="resultBox">
+                        <div class="result-text" id="resultText"></div>
+                    </div>
+
+                    <!-- People List -->
+                    <div class="section">
+                        <div class="section-title">Registered Persons</div>
+                        <div class="people-list" id="peopleList">
+                            <div class="empty-state">No persons registered</div>
+                        </div>
+                        <button
+                            class="btn btn-primary"
+                            id="addPersonBtn"
+                            style="margin-top: 12px"
+                        >
+                            Add Person
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Add Person -->
+        <div id="addPersonModal" class="modal">
+            <div class="modal-content">
+                <h3>Add New Person</h3>
+
+                <input
+                    type="text"
+                    id="personName"
+                    placeholder="Full Name"
+                    autofocus
+                />
+
+                <div class="section-title" style="margin-bottom: 8px">
+                    Photo Source
+                </div>
+                <button
+                    class="btn btn-secondary"
+                    id="openCameraModalBtn"
+                    style="margin-bottom: 8px; margin-top: 0"
+                >
+                    Camera Capture
+                </button>
+                <button class="btn btn-secondary" id="openFileBtn">
+                    Upload File
+                </button>
+                <input type="file" id="imageInput" accept="image/*" />
+
+                <div class="preview-box" id="previewBox" style="display: none">
+                    <img id="previewImg" alt="Preview" />
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="modal-btn save" id="savePersonBtn" disabled>
+                        Register
+                    </button>
+                    <button class="modal-btn cancel" id="closeModalBtn">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Camera -->
+        <div id="cameraModal" class="modal">
+            <div class="modal-content">
+                <h3>Capture Photo</h3>
+                <video
+                    id="cameraVideo"
+                    style="
+                        width: 100%;
+                        height: 200px;
+                        background: #000;
+                        border-radius: 4px;
+                        object-fit: cover;
+                        margin-bottom: 16px;
+                    "
+                ></video>
+                <div class="modal-buttons">
+                    <button class="modal-btn save" id="captureCameraBtn">
+                        Capture
+                    </button>
+                    <button class="modal-btn cancel" id="closeCameraModalBtn">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let videoStream = null;
+            let cameraStream = null;
+            let capturedBlob = null;
+            let currentSource = null;
+            let rtcPeerConnection = null;
+
+            // ===== SOURCE SELECTION =====
+            const sourceSelect = document.getElementById("sourceSelect");
+            const cameraSection = document.getElementById("cameraSection");
+            const rtspSection = document.getElementById("rtspSection");
+            const p2pSection = document.getElementById("p2pSection");
+
+            sourceSelect.addEventListener("change", changeSource);
+            document
+                .getElementById("connectRtspBtn")
+                .addEventListener("click", connectRtsp);
+            document
+                .getElementById("disconnectRtspBtn")
+                .addEventListener("click", disconnectRtsp);
+            document
+                .getElementById("rtspToggleDetectionBtn")
+                .addEventListener("click", toggleRtspDetection);
+            document
+                .getElementById("rtspToggleRecognitionBtn")
+                .addEventListener("click", toggleRtspRecognition);
+            document
+                .getElementById("connectP2pBtn")
+                .addEventListener("click", connectP2p);
+            document
+                .getElementById("addStreamBtn")
+                .addEventListener("click", () =>
+                    document
+                        .getElementById("addStreamModal")
+                        .classList.add("active"),
+                );
+            document
+                .getElementById("closeStreamModalBtn")
+                .addEventListener("click", () =>
+                    document
+                        .getElementById("addStreamModal")
+                        .classList.remove("active"),
+                );
+
+            loadRtspStreams();
+            document
+                .getElementById("saveStreamBtn")
+                .addEventListener("click", saveRtspStream);
+
+            let rtspStreamInterval = null;
+
+            function updateRtspFrame() {
+                try {
+                    if (typeof canvas === "undefined") return;
+
+                    fetch("/stream_frame")
+                        .then((r) => r.blob())
+                        .then((blob) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                ctx.drawImage(img, 0, 0);
+
+                                if (
+                                    detectionEnabled &&
+                                    typeof smoothFaces === "function" &&
+                                    typeof drawDetections === "function"
+                                ) {
+                                    fetch("/stream_detect", { method: "POST" })
+                                        .then((r) => r.json())
+                                        .then((data) => {
+                                            if (data.faces) {
+                                                smoothedFaces = smoothFaces(
+                                                    data.faces,
+                                                    smoothedFaces,
+                                                );
+                                                drawDetections(
+                                                    smoothedFaces,
+                                                    canvas.width,
+                                                    canvas.height,
+                                                );
+                                            }
+                                        })
+                                        .catch((err) =>
+                                            console.error("Detect error:", err),
+                                        );
+                                }
+                            };
+                            img.src = URL.createObjectURL(blob);
+                        })
+                        .catch((err) => console.error("Frame error:", err));
+                } catch (err) {
+                    console.error("Stream error:", err);
+                }
+            }
+
+            // Load RTSP streams on page load
+            loadRtspStreams();
+
+            function changeSource() {
+                const source = sourceSelect.value;
+                cameraSection.style.display = "none";
+                rtspSection.style.display = "none";
+                p2pSection.style.display = "none";
+
+                stopCamera();
+                if (rtspStreamInterval) clearInterval(rtspStreamInterval);
+
+                if (source === "camera") {
+                    cameraSection.style.display = "block";
+                    currentSource = "camera";
+                } else if (source === "rtsp") {
+                    rtspSection.style.display = "block";
+                    currentSource = "rtsp";
+                } else if (source === "p2p") {
+                    p2pSection.style.display = "block";
+                    currentSource = "p2p";
+                } else {
+                    currentSource = null;
+                    document.getElementById("video").style.display = "none";
+                }
+            }
+
+            async function loadRtspStreams() {
+                try {
+                    const response = await fetch("/rtsp_streams");
+                    const data = await response.json();
+                    const select = document.getElementById("rtspSelect");
+
+                    select.innerHTML =
+                        '<option value="">Select saved stream</option>';
+                    Object.entries(data.streams).forEach(([name, url]) => {
+                        const option = document.createElement("option");
+                        option.value = url;
+                        option.textContent = name;
+                        select.appendChild(option);
+                    });
+                } catch (err) {
+                    console.error("Error loading streams:", err);
+                }
+            }
+
+            async function saveRtspStream() {
+                const name = document.getElementById("streamName").value.trim();
+                const url = document.getElementById("streamUrl").value.trim();
+
+                if (!name || !url) {
+                    alert("Enter name and URL");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/rtsp_streams?name=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}`, {
+                        method: "POST",
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok)
+                        throw new Error(data.detail || "Failed to add stream");
+
+                    document.getElementById("streamName").value = "";
+                    document.getElementById("streamUrl").value = "";
+                    document
+                        .getElementById("addStreamModal")
+                        .classList.remove("active");
+                    loadRtspStreams();
+                } catch (err) {
+                    alert("Error: " + err.message);
+                }
+            }
+
+            async function deleteRtspStream(name) {
+                if (!confirm(`Delete stream "${name}"?`)) return;
+
+                try {
+                    const response = await fetch(`/rtsp_streams/${encodeURIComponent(name)}`, {
+                        method: "DELETE",
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok)
+                        throw new Error(data.detail || "Failed to delete stream");
+
+                    loadRtspStreams();
+                } catch (err) {
+                    alert("Error: " + err.message);
+                }
+            }
+
+            function deleteSelectedStream() {
+                const select = document.getElementById("rtspSelect");
+                const selectedOption = select.options[select.selectedIndex];
+
+                if (!selectedOption || selectedOption.value === "") {
+                    alert("Select a stream to delete");
+                    return;
+                }
+
+                const streamName = selectedOption.textContent;
+                deleteRtspStream(streamName);
+            }
+
+            async function startWebRTC() {
+                try {
+                    rtcPeerConnection = new RTCPeerConnection();
+
+                    // Add video track from server
+                    rtcPeerConnection.ontrack = (event) => {
+                        console.log("Received remote track:", event.track.kind);
+                        video.srcObject = event.streams[0];
+                        video.style.display = "block";
+                        video
+                            .play()
+                            .catch((err) => console.error("Play error:", err));
+                    };
+
+                    // Request video transceiver
+                    rtcPeerConnection.addTransceiver("video", {
+                        direction: "recvonly",
+                    });
+
+                    // Create offer
+                    const offer = await rtcPeerConnection.createOffer();
+                    await rtcPeerConnection.setLocalDescription(offer);
+
+                    // Send offer to server
+                    const response = await fetch("/offer", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            sdp: rtcPeerConnection.localDescription.sdp,
+                            type: rtcPeerConnection.localDescription.type,
+                        }),
+                    });
+
+                    const answer = await response.json();
+                    await rtcPeerConnection.setRemoteDescription(
+                        new RTCSessionDescription(answer),
+                    );
+
+                    video.style.display = "block";
+                    canvas.style.display = "block";
+                    return true;
+                } catch (err) {
+                    console.error("WebRTC error:", err);
+                    throw err;
+                }
+            }
+
+            async function connectRtsp() {
+                const select = document.getElementById("rtspSelect");
+                const url = select.value.trim();
+                const statusEl = document.getElementById("rtspStatus");
+
+                if (!url) {
+                    statusEl.textContent = "Select a stream";
+                    statusEl.style.color = "#ff7a6e";
+                    statusEl.style.display = "block";
+                    return;
+                }
+
+                statusEl.textContent = "Connecting to RTSP stream...";
+                statusEl.style.color = "#b8a60a";
+                statusEl.style.display = "block";
+
+                try {
+                    rtcPeerConnection = new RTCPeerConnection({
+                        iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+                    });
+
+                    const video = document.getElementById("rtspVideo");
+
+                    rtcPeerConnection.ontrack = (event) => {
+                        video.srcObject = event.streams[0];
+                        video.style.display = "block";
+                        video.play().catch((err) =>
+                            console.error("Play error:", err),
+                        );
+                    };
+
+                    rtcPeerConnection.addTransceiver("video", {
+                        direction: "recvonly",
+                    });
+
+                    const offer = await rtcPeerConnection.createOffer();
+                    await rtcPeerConnection.setLocalDescription(offer);
+
+                    statusEl.textContent = "Establishing WebRTC connection...";
+
+                    const response = await fetch("/rtsp_webrtc", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            url: url,
+                            sdp: rtcPeerConnection.localDescription.sdp,
+                            type: rtcPeerConnection.localDescription.type,
+                        }),
+                    });
+
+                    const answer = await response.json();
+                    if (!response.ok)
+                        throw new Error(answer.detail || "WebRTC connection failed");
+
+                    await rtcPeerConnection.setRemoteDescription(
+                        new RTCSessionDescription({
+                            sdp: answer.sdp,
+                            type: answer.type,
+                        }),
+                    );
+
+                    document.getElementById("connectRtspBtn").style.display =
+                        "none";
+                    document.getElementById("disconnectRtspBtn").style.display =
+                        "block";
+
+                    statusEl.textContent = "Connected";
+                    statusEl.style.color = "#2ea043";
+
+                    setTimeout(() => {
+                        document.getElementById(
+                            "rtspToggleDetectionBtn",
+                        ).disabled = false;
+                        document.getElementById(
+                            "rtspToggleDetectionBtn",
+                        ).style.display = "block";
+                        document.getElementById(
+                            "rtspToggleRecognitionBtn",
+                        ).disabled = false;
+                        document.getElementById(
+                            "rtspToggleRecognitionBtn",
+                        ).style.display = "block";
+                        isDetecting = true;
+                        rtspDetectLoop();
+                        statusEl.textContent = "Connected - Stream active";
+                        statusEl.style.color = "#6fff99";
+                    }, 1000);
+
+                    // Enable detection buttons after a delay
+                    setTimeout(() => {
+                        toggleDetectionBtn.disabled = false;
+                        toggleRecognitionBtn.disabled = false;
+                        isDetecting = true;
+                        rtspDetectLoop();
+                        statusEl.textContent = "Connected - Stream active";
+                    }, 2000);
+                } catch (err) {
+                    statusEl.textContent = "Error: " + err.message;
+                    statusEl.style.color = "#ff7a6e";
+                }
+            }
+
+            function disconnectRtsp() {
+                if (rtspStreamInterval) {
+                    clearInterval(rtspStreamInterval);
+                    rtspStreamInterval = null;
+                }
+                if (rtcPeerConnection) {
+                    rtcPeerConnection.close();
+                    rtcPeerConnection = null;
+                }
+                isDetecting = false;
+                detectionEnabled = false;
+                recognitionEnabled = false;
+                video.srcObject = null;
+                document.getElementById("video").style.display = "none";
+                canvas.style.display = "none";
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                document.getElementById("connectRtspBtn").style.display =
+                    "block";
+                document.getElementById("disconnectRtspBtn").style.display =
+                    "none";
+                document.getElementById(
+                    "rtspToggleDetectionBtn",
+                ).style.display = "none";
+                document.getElementById(
+                    "rtspToggleRecognitionBtn",
+                ).style.display = "none";
+                updateRtspDetectionButton();
+                updateRtspRecognitionButton();
+
+                const statusEl = document.getElementById("rtspStatus");
+                statusEl.style.display = "none";
+                statusEl.textContent = "";
+            }
+
+            function toggleRtspDetection() {
+                detectionEnabled = !detectionEnabled;
+                updateRtspDetectionButton();
+            }
+
+            function updateRtspDetectionButton() {
+                const btn = document.getElementById("rtspToggleDetectionBtn");
+                if (detectionEnabled) {
+                    btn.textContent = "Detection: ON";
+                    btn.style.background = "#2ea043";
+                } else {
+                    btn.textContent = "Detection: OFF";
+                    btn.style.background = "#b8680a";
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            function toggleRtspRecognition() {
+                recognitionEnabled = !recognitionEnabled;
+                updateRtspRecognitionButton();
+            }
+
+            function updateRtspRecognitionButton() {
+                const btn = document.getElementById("rtspToggleRecognitionBtn");
+                if (recognitionEnabled) {
+                    btn.textContent = "Recognition: ON";
+                    btn.style.background = "#2ea043";
+                } else {
+                    btn.textContent = "Recognition: OFF";
+                    btn.style.background = "#b8680a";
+                    lastRecognitionResult = null;
+                }
+            }
+
+            async function connectP2p() {
+                alert("P2P streaming coming soon");
+            }
+
+            async function rtspDetectLoop() {
+                if (!isDetecting || !currentSource) return;
+
+                if (detectionEnabled) {
+                    try {
+                        const response = await fetch("/stream_detect", {
+                            method: "POST",
+                        });
+                        const data = await response.json();
+
+                        if (response.ok && data.faces) {
+                            smoothedFaces = smoothFaces(
+                                data.faces,
+                                smoothedFaces,
+                            );
+
+                            if (canvas.width === 0 || canvas.height === 0) {
+                                canvas.width = 640;
+                                canvas.height = 480;
+                            }
+                            drawDetections(
+                                smoothedFaces,
+                                canvas.width,
+                                canvas.height,
+                            );
+                        }
+                    } catch (err) {
+                        console.error("Stream detect error:", err);
+                    }
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+
+                setTimeout(rtspDetectLoop, 150);
+            }
+
+            // ===== MAIN CAMERA =====
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("detectionCanvas");
+            const ctx = canvas.getContext("2d");
+            const startCameraBtn = document.getElementById("startCameraBtn");
+            const stopCameraBtn = document.getElementById("stopCameraBtn");
+            const toggleDetectionBtn =
+                document.getElementById("toggleDetectionBtn");
+            const toggleRecognitionBtn = document.getElementById(
+                "toggleRecognitionBtn",
+            );
+            const captureBtn = document.getElementById("captureBtn");
+            const resultBox = document.getElementById("resultBox");
+
+            let isDetecting = false;
+            let detectionEnabled = false;
+            let recognitionEnabled = false;
+            let lastRecognitionResult = null;
+            let smoothedFaces = [];
+            const smoothingFactor = 0.6;
+            let currentDetectedFaces = [];
+            let ws = null;
+            let processingFrame = false;
+
+            function connectDetectionWebSocket() {
+                if (ws && ws.readyState !== WebSocket.CLOSED) {
+                    return;
+                }
+
+                processingFrame = false;
+                const protocol =
+                    window.location.protocol === "https:" ? "wss:" : "ws:";
+                ws = new WebSocket(
+                    `${protocol}//${window.location.host}/ws/detect`,
+                );
+                ws.binaryType = "arraybuffer";
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    currentDetectedFaces = data.faces || [];
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    if (detectionEnabled && currentDetectedFaces.length > 0) {
+                        drawDetections(currentDetectedFaces);
+                    }
+                    processingFrame = false;
+                };
+
+                ws.onerror = (error) =>
+                    console.error("WebSocket error:", error);
+                ws.onclose = () => {
+                    processingFrame = false;
+                    ws = null;
+                };
+            }
+
+            function drawDetections(faces) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                faces.forEach((face) => {
+                    const width = face.x2 - face.x1;
+                    const height = face.y2 - face.y1;
+
+                    ctx.strokeStyle = "#00ff00";
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(face.x1, face.y1, width, height);
+
+                    if (
+                        recognitionEnabled &&
+                        face.name &&
+                        face.name !== "Unknown"
+                    ) {
+                        ctx.font = "bold 16px Arial";
+                        const textWidth = ctx.measureText(face.name).width;
+
+                        // Fond noir pour le texte
+                        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+                        ctx.fillRect(face.x1, face.y1 - 25, textWidth + 10, 25);
+
+                        // Texte vert
+                        ctx.fillStyle = "#00ff00";
+                        ctx.fillText(face.name, face.x1 + 5, face.y1 - 8);
+                    }
+                });
+            }
+
+            startCameraBtn.addEventListener("click", startCamera);
+            stopCameraBtn.addEventListener("click", stopCamera);
+            toggleDetectionBtn.addEventListener("click", toggleDetection);
+            toggleRecognitionBtn.addEventListener("click", toggleRecognition);
+            captureBtn.addEventListener("click", identify);
+
+            async function startCamera() {
+                try {
+                    if (!navigator.mediaDevices?.getUserMedia)
+                        throw new Error("Camera not supported");
+                    videoStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "user",
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                        },
+                    });
+                    video.srcObject = videoStream;
+                    video.style.display = "block";
+                    canvas.style.display = "block";
+                    startCameraBtn.style.display = "none";
+                    stopCameraBtn.style.display = "block";
+                    captureBtn.disabled = false;
+                    toggleDetectionBtn.disabled = false;
+                    toggleRecognitionBtn.disabled = false;
+
+                    video.addEventListener("loadedmetadata", () => {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                    });
+
+                    toggleDetectionBtn.disabled = false;
+                    detectionEnabled = false;
+                    updateDetectionButton();
+                    isDetecting = true;
+                    detectLoop();
+                } catch (err) {
+                    showResult("Error: " + err.message, false);
+                }
+            }
+
+            function stopCamera() {
+                isDetecting = false;
+                if (videoStream) {
+                    videoStream.getTracks().forEach((track) => track.stop());
+                    videoStream = null;
+                    video.style.display = "none";
+                    canvas.style.display = "none";
+                    startCameraBtn.style.display = "block";
+                    stopCameraBtn.style.display = "none";
+                    captureBtn.disabled = true;
+                    toggleDetectionBtn.disabled = true;
+                    toggleRecognitionBtn.disabled = true;
+                    detectionEnabled = false;
+                    recognitionEnabled = false;
+                    currentDetectedFaces = [];
+                    lastRecognitionResult = null;
+                    updateDetectionButton();
+                    updateRecognitionButton();
+                }
+            }
+
+            function toggleDetection() {
+                detectionEnabled = !detectionEnabled;
+                if (detectionEnabled) {
+                    connectDetectionWebSocket();
+                } else {
+                    processingFrame = false;
+                    if (ws) {
+                        ws.close();
+                    }
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                updateDetectionButton();
+            }
+
+            function updateDetectionButton() {
+                if (detectionEnabled) {
+                    toggleDetectionBtn.textContent = "Detection: ON";
+                    toggleDetectionBtn.style.background = "#2ea043";
+                } else {
+                    toggleDetectionBtn.textContent = "Detection: OFF";
+                    toggleDetectionBtn.style.background = "#b8680a";
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    currentDetectedFaces = [];
+                }
+            }
+
+            function toggleRecognition() {
+                recognitionEnabled = !recognitionEnabled;
+                updateRecognitionButton();
+            }
+
+            function updateRecognitionButton() {
+                if (recognitionEnabled) {
+                    toggleRecognitionBtn.textContent = "Recognition: ON";
+                    toggleRecognitionBtn.style.background = "#2ea043";
+                } else {
+                    toggleRecognitionBtn.textContent = "Recognition: OFF";
+                    toggleRecognitionBtn.style.background = "#b8680a";
+                    lastRecognitionResult = null;
+                }
+            }
+
+            async function detectLoop() {
+                if (!isDetecting || !videoStream) return;
+
+                try {
+                    const tempCanvas = document.createElement("canvas");
+                    tempCanvas.width = video.videoWidth;
+                    tempCanvas.height = video.videoHeight;
+                    tempCanvas.getContext("2d").drawImage(video, 0, 0);
+
+                    tempCanvas.toBlob(
+                        (blob) => {
+                            if (!detectionEnabled) {
+                                ctx.clearRect(
+                                    0,
+                                    0,
+                                    canvas.width,
+                                    canvas.height,
+                                );
+                                if (isDetecting) {
+                                    setTimeout(detectLoop, 100);
+                                }
+                            } else if (
+                                ws &&
+                                ws.readyState === WebSocket.OPEN &&
+                                !processingFrame
+                            ) {
+                                processingFrame = true;
+                                ws.send(blob);
+                                if (isDetecting) {
+                                    setTimeout(detectLoop, 100);
+                                }
+                            } else if (isDetecting) {
+                                setTimeout(detectLoop, 50);
+                            }
+                        },
+                        "image/jpeg",
+                        0.8,
+                    );
+                } catch (err) {
+                    console.error("Capture error:", err);
+                    if (isDetecting) {
+                        setTimeout(detectLoop, 100);
+                    }
+                }
+            }
+
+            function smoothFaces(newFaces, oldFaces) {
+                if (newFaces.length === 0) return [];
+
+                return newFaces.map((newFace) => {
+                    let closestOldFace = null;
+                    let minDistance = Infinity;
+
+                    oldFaces.forEach((oldFace) => {
+                        const dx =
+                            (newFace.x1 + newFace.x2) / 2 -
+                            (oldFace.x1 + oldFace.x2) / 2;
+                        const dy =
+                            (newFace.y1 + newFace.y2) / 2 -
+                            (oldFace.y1 + oldFace.y2) / 2;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestOldFace = oldFace;
+                        }
+                    });
+
+                    if (closestOldFace && minDistance < 100) {
+                        return {
+                            x1:
+                                closestOldFace.x1 * (1 - smoothingFactor) +
+                                newFace.x1 * smoothingFactor,
+                            y1:
+                                closestOldFace.y1 * (1 - smoothingFactor) +
+                                newFace.y1 * smoothingFactor,
+                            x2:
+                                closestOldFace.x2 * (1 - smoothingFactor) +
+                                newFace.x2 * smoothingFactor,
+                            y2:
+                                closestOldFace.y2 * (1 - smoothingFactor) +
+                                newFace.y2 * smoothingFactor,
+                            confidence: newFace.confidence,
+                        };
+                    }
+
+                    return newFace;
+                });
+            }
+
+            async function identify() {
+                if (!videoStream) return;
+
+                const tempCanvas = document.createElement("canvas");
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                tempCanvas.getContext("2d").drawImage(video, 0, 0);
+
+                tempCanvas.toBlob(async (blob) => {
+                    captureBtn.disabled = true;
+                    const formData = new FormData();
+                    formData.append("file", blob);
+
+                    try {
+                        const response = await fetch("/recognize", {
+                            method: "POST",
+                            body: formData,
+                        });
+                        const data = await response.json();
+                        if (!response.ok)
+                            throw new Error(data.detail || "Error");
+
+                        const isMatch = data.name !== "Unknown";
+                        const message = isMatch
+                            ? `✓ ${data.name}\nDistance: ${data.distance}`
+                            : `✗ Unknown\nDistance: ${data.distance}`;
+                        showResult(message, isMatch);
+                    } catch (err) {
+                        showResult(err.message, false);
+                    } finally {
+                        captureBtn.disabled = false;
+                    }
+                });
+            }
+
+            function showResult(message, success) {
+                resultBox.className =
+                    "result-box " + (success ? "success" : "error");
+                document.getElementById("resultText").textContent = message;
+                resultBox.style.display = "block";
+            }
+
+            // ===== MODAL ADD PERSON =====
+            const modal = document.getElementById("addPersonModal");
+            const personNameInput = document.getElementById("personName");
+            const addPersonBtn = document.getElementById("addPersonBtn");
+            const closeModalBtn = document.getElementById("closeModalBtn");
+            const savePersonBtn = document.getElementById("savePersonBtn");
+            const imageInput = document.getElementById("imageInput");
+            const openFileBtn = document.getElementById("openFileBtn");
+            const previewBox = document.getElementById("previewBox");
+            const previewImg = document.getElementById("previewImg");
+
+            addPersonBtn.addEventListener("click", () => {
+                modal.classList.add("active");
+                personNameInput.focus();
+                capturedBlob = null;
+                previewBox.style.display = "none";
+            });
+
+            closeModalBtn.addEventListener("click", () =>
+                modal.classList.remove("active"),
+            );
+
+            openFileBtn.addEventListener("click", () => imageInput.click());
+
+            imageInput.addEventListener("change", () => {
+                if (imageInput.files && imageInput.files[0]) {
+                    capturedBlob = imageInput.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        previewBox.style.display = "block";
+                        updateSaveBtn();
+                    };
+                    reader.readAsDataURL(imageInput.files[0]);
+                }
+            });
+
+            personNameInput.addEventListener("input", updateSaveBtn);
+
+            function updateSaveBtn() {
+                savePersonBtn.disabled =
+                    !personNameInput.value.trim() || !capturedBlob;
+            }
+
+            savePersonBtn.addEventListener("click", async () => {
+                const name = personNameInput.value.trim();
+                if (!name || !capturedBlob) return;
+
+                savePersonBtn.disabled = true;
+                const formData = new FormData();
+                formData.append("file", capturedBlob);
+
+                try {
+                    const response = await fetch(
+                        "/faces?name=" + encodeURIComponent(name),
+                        {
+                            method: "POST",
+                            body: formData,
+                        },
+                    );
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || "Error");
+
+                    modal.classList.remove("active");
+                    personNameInput.value = "";
+                    imageInput.value = "";
+                    previewBox.style.display = "none";
+                    capturedBlob = null;
+                    loadPeople();
+                } catch (err) {
+                    alert("Error: " + err.message);
+                } finally {
+                    savePersonBtn.disabled = false;
+                }
+            });
+
+            // ===== MODAL CAMERA =====
+            const cameraModal = document.getElementById("cameraModal");
+            const openCameraModalBtn =
+                document.getElementById("openCameraModalBtn");
+            const closeCameraModalBtn = document.getElementById(
+                "closeCameraModalBtn",
+            );
+            const cameraVideo = document.getElementById("cameraVideo");
+            const captureCameraBtn =
+                document.getElementById("captureCameraBtn");
+
+            openCameraModalBtn.addEventListener("click", openCameraModal);
+            closeCameraModalBtn.addEventListener("click", closeCameraModal);
+            captureCameraBtn.addEventListener("click", captureFromCamera);
+
+            async function openCameraModal() {
+                cameraModal.classList.add("active");
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "user",
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                        },
+                    });
+                    cameraVideo.srcObject = cameraStream;
+                } catch (err) {
+                    alert("Camera error: " + err.message);
+                }
+            }
+
+            function closeCameraModal() {
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach((track) => track.stop());
+                    cameraStream = null;
+                }
+                cameraModal.classList.remove("active");
+            }
+
+            function captureFromCamera() {
+                const tempCanvas = document.createElement("canvas");
+                tempCanvas.width = cameraVideo.videoWidth;
+                tempCanvas.height = cameraVideo.videoHeight;
+                tempCanvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+
+                tempCanvas.toBlob((blob) => {
+                    capturedBlob = blob;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        previewBox.style.display = "block";
+                        updateSaveBtn();
+                        closeCameraModal();
+                    };
+                    reader.readAsDataURL(blob);
+                });
+            }
+
+            // ===== PEOPLE LIST =====
+            async function loadPeople() {
+                try {
+                    const response = await fetch("/faces");
+                    const data = await response.json();
+                    const people = data.faces || [];
+
+                    const peopleList = document.getElementById("peopleList");
+                    if (people.length === 0) {
+                        peopleList.innerHTML =
+                            '<div class="empty-state">No persons registered</div>';
+                        return;
+                    }
+
+                    peopleList.innerHTML = people
+                        .map(
+                            (name) => `
+                    <div class="person-item">
+                        <div class="person-name">${name}</div>
+                        <button class="btn btn-danger" style="width: auto; padding: 6px 10px; margin: 0;" onclick="deletePerson('${name}')">Delete</button>
+                    </div>
+                `,
+                        )
+                        .join("");
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            async function deletePerson(name) {
+                if (!confirm(`Delete "${name}" ?`)) return;
+                try {
+                    await fetch(`/faces/${encodeURIComponent(name)}`, {
+                        method: "DELETE",
+                    });
+                    loadPeople();
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            // Load people on page load
+            loadPeople();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  face-detection-2:
+    build: .
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./db.json:/app/db.json
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: unless-stopped
