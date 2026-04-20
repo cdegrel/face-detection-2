@@ -1,11 +1,20 @@
+# --- Machine Learning & Numerical Computing ---
+torch==2.2.2
+torchvision==0.17.2
+numpy==1.26.4
+
+# --- Face Recognition & Image Processing ---
+facenet-pytorch==2.6.0
+pillow==10.2.0
+
+# --- Multimedia & WebRTC ---
+av==16.1.0
+aiortc==1.14.0
+
+# --- Web Framework & Server ---
+fastapi==0.136.0
+uvicorn==0.44.0
+python-multipart==0.0.26
+
+# --- Configuration & Environment ---
 python-dotenv==1.2.2
-fastapi==0.104.1
-uvicorn==0.24.0
-torch==2.1.1
-torchvision==0.16.1
-facenet-pytorch==2.5.3
-Pillow==10.1.0
-numpy==1.24.3
-python-multipart==0.0.6
-aiortc==1.10.0
-av==13.0.0
