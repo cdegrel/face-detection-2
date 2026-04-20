@@ -3,11 +3,17 @@ import os
 from io import BytesIO
 
 import av
-import cv2
 import numpy as np
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
-from av import VideoFrame
-from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from av.video.frame import VideoFrame
+from fastapi import (
+    FastAPI,
+    File,
+    HTTPException,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -36,37 +42,6 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-def draw_boxes(frame, boxes, db):
-    """Draw detection boxes and recognition results on frame."""
-    if boxes is None or len(boxes) == 0:
-        return frame
-
-    embeddings = extract_embeddings(frame, boxes)
-    h, w = frame.shape[:2]
-
-    for i, box in enumerate(boxes):
-        x1, y1, x2, y2 = box.astype(int)
-        x1, y1 = max(0, x1), max(0, y1)
-        x2, y2 = min(w, x2), min(h, y2)
-
-        if i < len(embeddings):
-            name, distance = recognize_face(embeddings[i], db)
-            if name:
-                color = (0, 255, 0)
-                text = f"{name}"
-            else:
-                color = (0, 0, 255)
-                text = "Unknown"
-        else:
-            color = (255, 255, 0)
-            text = "Detecting..."
-
-        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3)
-        cv2.putText(frame, text, (x1, y1 - 15), cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
-
-    return frame
-
-
 @app.get("/", response_class=HTMLResponse)
 async def index():
     try:
@@ -74,29 +49,6 @@ async def index():
             return f.read()
     except FileNotFoundError:
         return "<h1>Interface not found</h1>"
-
-
-
-
-@app.post("/process_frame")
-async def process_frame(file: UploadFile = File(...)):
-    """Process a single uploaded frame with detection and recognition."""
-    try:
-        contents = await file.read()
-        img = Image.open(BytesIO(contents))
-        frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-
-        boxes, _, frame = detect_faces(frame)
-        db = load_faces_db()
-        frame = draw_boxes(frame, boxes, db)
-
-        ret, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-        if ret:
-            return {"status": "success", "frame": buffer.tobytes().hex()}
-        else:
-            return {"status": "error", "message": "Failed to encode frame"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 
 @app.get("/faces")
@@ -114,7 +66,7 @@ async def add_face(name: str, file: UploadFile = File(...)):
     try:
         contents = await file.read()
         img = Image.open(BytesIO(contents))
-        frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        frame = np.array(img)
 
         boxes, _, _ = detect_faces(frame)
         if boxes is None or len(boxes) == 0:
@@ -148,9 +100,9 @@ async def remove_face(name: str):
 def load_rtsp_streams():
     """Load RTSP streams from database."""
     try:
-        with open(Config.DB_FILE, 'r') as f:
+        with open(Config.DB_FILE, "r") as f:
             db = json.load(f)
-            return db.get('rtsp_streams', {})
+            return db.get("rtsp_streams", {})
     except Exception as e:
         print(f"Error loading RTSP streams: {e}")
         return {}
@@ -161,16 +113,16 @@ def save_rtsp_streams(streams):
     try:
         # Load existing database
         if os.path.exists(Config.DB_FILE):
-            with open(Config.DB_FILE, 'r') as f:
+            with open(Config.DB_FILE, "r") as f:
                 db = json.load(f)
         else:
-            db = {'faces': {}, 'rtsp_streams': {}}
+            db = {"faces": {}, "rtsp_streams": {}}
 
         # Update streams
-        db['rtsp_streams'] = streams
+        db["rtsp_streams"] = streams
 
         # Save
-        with open(Config.DB_FILE, 'w') as f:
+        with open(Config.DB_FILE, "w") as f:
             json.dump(db, f, indent=2)
     except Exception as e:
         print(f"Error saving RTSP streams: {e}")
@@ -270,7 +222,9 @@ async def rtsp_webrtc(data: dict):
             pc.addTrack(track)
         except Exception as e:
             print(f"Error creating RTSP track: {e}")
-            raise HTTPException(status_code=400, detail=f"Failed to connect to RTSP stream: {e}")
+            raise HTTPException(
+                status_code=400, detail=f"Failed to connect to RTSP stream: {e}"
+            )
 
         await pc.setRemoteDescription(offer)
         answer = await pc.createAnswer()
@@ -288,7 +242,7 @@ async def rtsp_webrtc(data: dict):
 
 
 def _extract_embedding(img_pil):
-    frame = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
+    frame = np.array(img_pil)
     boxes, _, _ = detect_faces(frame)
     if boxes is None or len(boxes) == 0:
         return None
@@ -359,7 +313,7 @@ async def websocket_detect(websocket: WebSocket):
 
                 try:
                     img = Image.open(BytesIO(data))
-                    frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                    frame = np.array(img)
                 except Exception as e:
                     print(f"Image decode error: {e}")
                     await websocket.send_json({"faces": []})
@@ -387,19 +341,23 @@ async def websocket_detect(websocket: WebSocket):
                             name = "Unknown"
                             if i < len(embeddings):
                                 try:
-                                    recognized_name, distance = recognize_face(embeddings[i], db)
+                                    recognized_name, distance = recognize_face(
+                                        embeddings[i], db
+                                    )
                                     if recognized_name:
                                         name = recognized_name
                                 except Exception as e:
                                     print(f"Recognition error: {e}")
 
-                            faces_with_names.append({
-                                "x1": int(x1),
-                                "y1": int(y1),
-                                "x2": int(x2),
-                                "y2": int(y2),
-                                "name": name
-                            })
+                            faces_with_names.append(
+                                {
+                                    "x1": int(x1),
+                                    "y1": int(y1),
+                                    "x2": int(x2),
+                                    "y2": int(y2),
+                                    "name": name,
+                                }
+                            )
                     except Exception as e:
                         print(f"Processing error: {e}")
 
@@ -415,5 +373,3 @@ async def websocket_detect(websocket: WebSocket):
                 continue
     except Exception as e:
         print(f"WebSocket detect fatal error: {e}")
-
-

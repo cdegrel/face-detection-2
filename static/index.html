@@ -506,7 +506,11 @@
                             <button
                                 class="btn btn-danger"
                                 id="deleteStreamBtn"
-                                style="width: 100%; margin-top: 4px; grid-column: 1 / -1"
+                                style="
+                                    width: 100%;
+                                    margin-top: 4px;
+                                    grid-column: 1 / -1;
+                                "
                                 onclick="deleteSelectedStream()"
                             >
                                 Delete Stream
@@ -863,9 +867,12 @@
                 }
 
                 try {
-                    const response = await fetch(`/rtsp_streams?name=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}`, {
-                        method: "POST",
-                    });
+                    const response = await fetch(
+                        `/rtsp_streams?name=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}`,
+                        {
+                            method: "POST",
+                        },
+                    );
 
                     const data = await response.json();
                     if (!response.ok)
@@ -886,13 +893,18 @@
                 if (!confirm(`Delete stream "${name}"?`)) return;
 
                 try {
-                    const response = await fetch(`/rtsp_streams/${encodeURIComponent(name)}`, {
-                        method: "DELETE",
-                    });
+                    const response = await fetch(
+                        `/rtsp_streams/${encodeURIComponent(name)}`,
+                        {
+                            method: "DELETE",
+                        },
+                    );
 
                     const data = await response.json();
                     if (!response.ok)
-                        throw new Error(data.detail || "Failed to delete stream");
+                        throw new Error(
+                            data.detail || "Failed to delete stream",
+                        );
 
                     loadRtspStreams();
                 } catch (err) {
@@ -978,7 +990,9 @@
 
                 try {
                     rtcPeerConnection = new RTCPeerConnection({
-                        iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+                        iceServers: [
+                            { urls: ["stun:stun.l.google.com:19302"] },
+                        ],
                     });
 
                     const video = document.getElementById("rtspVideo");
@@ -986,9 +1000,9 @@
                     rtcPeerConnection.ontrack = (event) => {
                         video.srcObject = event.streams[0];
                         video.style.display = "block";
-                        video.play().catch((err) =>
-                            console.error("Play error:", err),
-                        );
+                        video
+                            .play()
+                            .catch((err) => console.error("Play error:", err));
                     };
 
                     rtcPeerConnection.addTransceiver("video", {
@@ -1012,7 +1026,9 @@
 
                     const answer = await response.json();
                     if (!response.ok)
-                        throw new Error(answer.detail || "WebRTC connection failed");
+                        throw new Error(
+                            answer.detail || "WebRTC connection failed",
+                        );
 
                     await rtcPeerConnection.setRemoteDescription(
                         new RTCSessionDescription({

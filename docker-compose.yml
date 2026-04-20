@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   face-detection-2:
     build: .
